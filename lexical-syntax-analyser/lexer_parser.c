@@ -51,22 +51,6 @@ int lex();
 #define RIGHT_PAREN 26  
 //")"
 
-int main() {
-    if((in_fp = fopen("front.in", "r")) == NULL){
-        printf("ERROR - cannot open front.in\n");
-    } 
-    else{
-        getChar(); 
-        //ilk karakteri oku
-        do {
-            lex(); 
-            //lexical analiz yap
-        } while (nextToken != EOF); 
-        //dosyanın sonuna kadar işle
-    }
-    return 0;
-}
-
 //operatörleri ve parantezleri kontrol eder
 //uygun token kodunu döndürür
 int lookup(char ch) {
@@ -181,6 +165,89 @@ int lex() {
             lexeme[3] = 0;
             break;
     }
-    printf("Next token is: %d, Next lexeme is %s\n", nextToken, lexeme);
+    printf("next token is: %d next lexeme is %s\n", nextToken, lexeme);
     return nextToken;
+}
+
+//<expr> → <term> {(+ | -) <term>}
+//<term> → <factor> {(* | /) <factor>}
+//<factor> → id | int_constant | ( <expr> )
+
+void expr() {
+    printf("enter <expr>\n");
+
+    term();
+    while (nextToken == ADD_OP || nextToken == SUB_OP) {
+        lex();
+        term();
+    }
+
+    printf("exit <expr>\n");
+}
+
+void term() {
+    printf("enter <term>...\n");
+    factor();
+
+    while (nextToken == MULT_OP || nextToken == DIV_OP) {
+        lex();
+        factor();
+    }
+
+    printf("exit <term>\n");
+}
+
+void factor() {
+    printf("enter <factor>\n");
+
+    if (nextToken == IDENT || nextToken == INT_LIT) {
+        lex();
+    } 
+    else {
+        if (nextToken == LEFT_PAREN) {
+            lex();
+            expr();
+            if (nextToken == RIGHT_PAREN) {
+                lex();
+            } 
+            else {
+                error();
+            }
+        } 
+        else {
+            error();
+        }
+    }
+
+    printf("exit <factor>\n");
+}
+
+//<ifstmt> → if (<boolexpr>) <statement> [else <statement>]
+
+void ifstmt() {
+    if (nextToken != IF_CODE) {
+        error();
+    } 
+    else {
+        lex();
+
+        if (nextToken != LEFT_PAREN) {
+            error();
+        } 
+        else {
+            boolexpr();
+
+            if (nextToken != RIGHT_PAREN) {
+                error();
+            } 
+            else {
+                statement();
+
+                if (nextToken == ELSE_CODE) {
+                    lex();
+                    statement();
+                }
+            }
+        }
+    }
 }
